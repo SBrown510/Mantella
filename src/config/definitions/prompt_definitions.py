@@ -76,6 +76,21 @@ class PromptDefinitions:
                                 conversation_summary = reads the latest conversation summaries for the NPCs stored in data/conversations/NPC_Name/NPC_Name_summary_X.txt
                                 equipment = a basic description of the equipment the NPCs carry
                                 actions = instructions for the LLM to trigger actions"""
+                                
+    BASE_ADVENTURE_DESCRIPTION = """The starting prompt sent to the LLM when an adventure conversation is started.
+                                The following are dynamic variables that need to be contained in curly brackets {}:
+                                name = the NPC's name
+                                names = the names of all NPCs in the conversation
+                                game = the selected game
+                                bio = the backgrounds of the NPCs
+                                location = the current location
+                                weather = the current weather
+                                time = the time of day as a number (eg 1, 22)
+                                time_group = the time of day in words (eg "in the morning", "at night")
+                                language = the selected language
+                                conversation_summary = reads the latest conversation summaries for the NPCs stored in data/conversations/NPC_Name/NPC_Name_summary_X.txt
+                                equipment = a basic description of the equipment the NPCs carry
+                                actions = instructions for the LLM to trigger actions"""
         
     class PromptChecker(ConfigValueConstraint[str]):
         def __init__(self, allowed_prompt_variables: list[str]) -> None:
@@ -140,6 +155,26 @@ class PromptDefinitions:
                                     Remember, you can only respond as {names}. Ensure to use their full name when responding.
                                     The conversation takes place in {language}."""
         return ConfigValueString("skyrim_radiant_prompt","Skyrim Radiant Conversation Prompt",PromptDefinitions.BASE_RADIANT_DESCRIPTION,skyrim_radiant_prompt,[PromptDefinitions.PromptChecker(PromptDefinitions.ALLOWED_PROMPT_VARIABLES_RADIANT)])
+
+    @staticmethod
+    def get_skyrim_adventure_prompt_config_value() -> ConfigValue:
+        skyrim_adventure_prompt = """The following is a conversation in {location} in Skyrim between {names}.
+                                    Here are their backgrounds: 
+                                    {bios}                                    
+                                    {conversation_summaries}
+                                    The time is {time} {time_group}.
+                                    {weather}
+                                    You are tasked with providing the responses for the NPCs. Please begin your response with an indication of who you are speaking as, for example: '{name}: Good evening.'. 
+                                    Please use your own discretion to decide who should speak in a given situation (sometimes responding with all NPCs is suitable). 
+                                    {actions}
+                                    Remember, you can only respond as {names}. Ensure to use their full name when responding.
+                                    The conversation takes place in {language}.
+                                    
+                                    Please begin or continue an immersive and natural conversation (greetings are not needed).
+                                    The topic should ideally reveal something about the player and who they are, continue a previous conversation thread, or reference the current location, recent events, or something the player 
+                                    has done recently. Feel free to comment on anything that would naturally spark conversation — observations, recent actions, stray thoughts, or shared experiences are all welcome."""
+        return ConfigValueString("skyrim_adventure_prompt","Skyrim Adventure Conversation Prompt",PromptDefinitions.BASE_ADVENTURE_DESCRIPTION,skyrim_adventure_prompt,[PromptDefinitions.PromptChecker(PromptDefinitions.ALLOWED_PROMPT_VARIABLES)])
+
 
     @staticmethod
     def get_fallout4_prompt_config_value() -> ConfigValue:

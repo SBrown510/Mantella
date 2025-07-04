@@ -61,6 +61,8 @@ class GameStateManager:
             self.process_stt_setup(input_json)
         
         context_for_conversation = context(world_id, self.__config, self.__client, self.__rememberer, self.__language_info)
+        print("adio =", context_for_conversation.is_adventure_dialogue, " and setting it to =", input_json.get("mantella_adventure", False))
+        context_for_conversation.is_adventure_dialogue = input_json.get("mantella_adventure", False)
         self.__talk = conversation(context_for_conversation, self.__chat_manager, self.__rememberer, self.__client, self.__stt, self.__mic_input, self.__mic_ptt)
         self.__update_context(input_json)
         self.__try_preload_voice_model()
