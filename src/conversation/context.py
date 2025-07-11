@@ -34,6 +34,7 @@ class Context:
         self.__vision_hints: str = ''
         self.__have_actors_changed: bool = False
         self.__game: GameEnum = config.game
+        self.is_adventure_dialogue: bool = False
 
         self.__prev_location: str | None = None
         if self.__game.base_game == GameEnum.FALLOUT4:

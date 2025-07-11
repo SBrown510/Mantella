@@ -15,7 +15,7 @@ from src.output_manager import ChatManager
 from src.llm.messages import AssistantMessage, SystemMessage, UserMessage
 from src.conversation.context import Context
 from src.llm.message_thread import message_thread
-from src.conversation.conversation_type import conversation_type, multi_npc, pc_to_npc, radiant
+from src.conversation.conversation_type import conversation_type, multi_npc, pc_to_npc, radiant, adventure
 from src.character_manager import Character
 from src.http.communication_constants import communication_constants as comm_consts
 from src.stt import Transcriber
@@ -40,10 +40,13 @@ class Conversation:
         self.__stt: Transcriber | None = stt
         self.__events_refresh_time: float = context_for_conversation.config.events_refresh_time  # Time in seconds before events are considered stale
         self.__transcribed_text: str | None = None
-        if not self.__context.npcs_in_conversation.contains_player_character(): # TODO: fix this being set to a radiant conversation because of NPCs in conversation not yet being added
-            self.__conversation_type: conversation_type = radiant(context_for_conversation.config)
+        if self.__context.is_adventure_dialogue:
+            self.__conversation_type: conversation_type = adventure(context_for_conversation.config)
         else:
-            self.__conversation_type: conversation_type = pc_to_npc(context_for_conversation.config)        
+            if not self.__context.npcs_in_conversation.contains_player_character:
+                self.__conversation_type: conversation_type = radiant(context_for_conversation.config)
+            else:
+                self.__conversation_type: conversation_type = pc_to_npc(context_for_conversation.config)        
         self.__messages: message_thread = message_thread(self.__context.config, None)
         self.__output_manager: ChatManager = output_manager
         self.__rememberer: Remembering = rememberer
@@ -99,7 +102,12 @@ class Conversation:
             tuple[str, sentence | None]: Returns a tuple consisting of a reply type and an optional sentence
         """
         greeting: UserMessage | None = self.__conversation_type.get_user_message(self.__context, self.__messages)
-        if greeting:
+        
+        if self.__context.is_adventure_dialogue:
+            # Adventure Dialogue: NPC initiates naturally, skip player greeting
+            self.__start_generating_npc_sentences()
+            return comm_consts.KEY_REPLYTYPE_NPCTALK, None
+        elif greeting:
             self.__messages.add_message(greeting)
             self.__start_generating_npc_sentences()
             return comm_consts.KEY_REPLYTYPE_NPCTALK, None
@@ -261,18 +269,22 @@ class Conversation:
 
     @utils.time_it
     def __update_conversation_type(self):
-        """This changes between pc_to_npc, multi_npc and radiant conversation_types based on the current state of the context
-        """
+        """This changes between adventure, pc_to_npc, multi_npc and radiant conversation_types based on the current state of the context"""
         # If the conversation can proceed for the first time, it starts and we add the system_message with the prompt
         if not self.__has_already_ended:
             self.__stop_generation()
             self.__sentences.clear()
             
-            if not self.__context.npcs_in_conversation.contains_player_character():
+            if self.__context.is_adventure_dialogue:
+                print("adventure selected")
+                self.__conversation_type = adventure(self.__context.config)
+            elif not self.__context.npcs_in_conversation.contains_player_character():
+                print("radiant selected")
                 self.__conversation_type = radiant(self.__context.config)
             elif self.__context.npcs_in_conversation.active_character_count() >= 3:
                 self.__conversation_type = multi_npc(self.__context.config)
             else:
+                print("pcnpc selected")
                 self.__conversation_type = pc_to_npc(self.__context.config)
 
             new_prompt = self.__conversation_type.generate_prompt(self.__context)        
@@ -362,6 +374,7 @@ class Conversation:
         self.__stop_generation()
         self.__sentences.clear()
         self.__save_conversation(is_reload=False)
+        self.context.is_adventure_dialogue = False
     
     @utils.time_it
     def __start_generating_npc_sentences(self):
