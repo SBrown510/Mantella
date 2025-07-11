@@ -146,9 +146,6 @@ class radiant(conversation_type):
     
     def should_end(self, context_for_conversation: Context, messages: message_thread) -> bool:
         return len(messages) > 4
-    
-    def should_end(self, context_for_conversation: Context, messages: message_thread) -> bool:
-        return len(messages) > 4
 
 class adventure(conversation_type):
     """A conversation initiated by a follower NPC toward the player."""
