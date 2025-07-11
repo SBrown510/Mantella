@@ -147,7 +147,7 @@ class radiant(conversation_type):
     def should_end(self, context_for_conversation: Context, messages: message_thread) -> bool:
         return len(messages) > 4
     
-    def should_end(self, context_for_conversation: context, messages: message_thread) -> bool:
+    def should_end(self, context_for_conversation: Context, messages: message_thread) -> bool:
         return len(messages) > 4
 
 class adventure(conversation_type):
@@ -156,7 +156,7 @@ class adventure(conversation_type):
         super().__init__(config)
 
     @utils.time_it
-    def generate_prompt(self, context_for_conversation: context) -> str:
+    def generate_prompt(self, context_for_conversation: Context) -> str:
         # Adventure prompt defined in your config file or editable via GUI
         prompt_template = self._config.adventure_prompt
         actions = [a for a in self._config.actions if a.use_in_on_on_one]
@@ -167,6 +167,6 @@ class adventure(conversation_type):
         message_thread_to_adjust.modify_messages(prompt, multi_npc_conversation=False, remove_system_flagged_messages=True)
 
     @utils.time_it
-    def get_user_message(self, context_for_conversation: context, messages: message_thread) -> UserMessage | None:
+    def get_user_message(self, context_for_conversation: Context, messages: message_thread) -> UserMessage | None:
         # NPC starts the conversation, so player doesn't say anything first
         return None
