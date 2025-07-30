@@ -34,6 +34,7 @@ class sentence_accumulator:
         return result
     
     def accumulate(self, llm_output: str):
+        llm_output = llm_output.replace('"', '') 
         llm_output = self.__cleaner.clean_sentence(llm_output)
         self.__cleaned_llm_output += llm_output
     
